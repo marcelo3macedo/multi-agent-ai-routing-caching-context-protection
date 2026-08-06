@@ -1,0 +1,45 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: ai_routing_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - ai_routing_network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai_routing_api
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
+      - CLASSIFIER_MODEL=${CLASSIFIER_MODEL:-gemini-1.5-flash-8b}
+      - USE_MOCK_LLM=${USE_MOCK_LLM:-false}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - ai_routing_network
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  ai_routing_network:
+    driver: bridge

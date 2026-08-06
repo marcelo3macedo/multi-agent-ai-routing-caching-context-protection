@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from src.server import app
+from src.presentation.api.server import app
 
 client = TestClient(app)
 
@@ -14,7 +14,7 @@ def test_health_endpoint():
 
 def test_chat_rest_endpoint_success():
     payload = {
-        "message": "Bom dia",
+        "message": "Quem é a empresa?",
         "user_id": "test_user_rest",
         "session_id": None
     }
@@ -31,7 +31,8 @@ def test_chat_rest_endpoint_success():
     assert metrics["prompt_tokens"] > 0
     assert metrics["total_tokens"] > metrics["prompt_tokens"]
     assert metrics["latency_ms"] > 0
-    assert "ALTO_CONSUMO_TOKENS_SAUDACAO (Prompt Bloqueado enviado inteiro)" in metrics["problem_tags"]
+    assert "intent" in metrics
+    assert "cache_status" in metrics
 
 def test_chat_rest_endpoint_empty_message():
     payload = {
@@ -44,12 +45,11 @@ def test_chat_rest_endpoint_empty_message():
 def test_chat_websocket_endpoint_streaming():
     with client.websocket_connect("/ws/chat") as websocket:
         websocket.send_json({
-            "message": "Quem é a empresa?",
+            "message": "Me recomende um filme",
             "user_id": "test_user_ws"
         })
         
         events = []
-        # Aguarda eventos até receber 'complete'
         while True:
             data = websocket.receive_json()
             events.append(data)

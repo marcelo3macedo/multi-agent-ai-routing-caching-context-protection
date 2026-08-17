@@ -12,34 +12,6 @@ O objetivo declarado do projeto é **eficiência**: menos tokens, menos latênci
 
 ---
 
-## 🏛️ Estrutura do Projeto (Clean Architecture)
-
-```
-.
-├── Dockerfile                         # Containerização da API FastAPI Python
-├── docker-compose.yml                 # Orquestração dos serviços FastAPI + Redis 7
-├── requirements.txt                   # Dependências do projeto
-├── run_benchmark.py                   # Benchmark: monolítico vs roteado/cacheado
-├── cli.py                             # Interface REPL no Terminal CLI (Typer/Rich)
-└── src/
-    ├── domain/                        # Entidades e Interfaces do Domínio
-    ├── application/                   # Casos de Uso (ProcessChatMessageUseCase)
-    ├── infrastructure/
-    │   ├── cache/                     # Cache Interceptador Redis (exact + semantic)
-    │   ├── classifiers/               # Classificador de Intenção leve
-    │   └── adk/                       # RootAgent + sub-agentes (Google ADK)
-    │       ├── agent.py               # RootAgent (multi-agente) e BaseRootAgent (baseline)
-    │       ├── institutional_agent.py # Sub-agente institucional (base JSON estática)
-    │       ├── movie_agent.py         # Sub-agente de filmes (TMDB)
-    │       ├── tmdb_tool.py           # Tool real do TMDB + Smart Context Truncation
-    │       ├── prompts.py             # Prompts/instruções de cada agente
-    │       ├── tool_logging.py        # Logs de chamadas de tool (só no servidor)
-    │       └── error_handling.py      # Tradução de erros técnicos em respostas amigáveis
-    └── presentation/                  # Controladores FastAPI (REST / WebSocket) e CLI Terminal
-```
-
----
-
 ## 🛠️ Tecnologias
 
 - **[FastAPI](https://fastapi.tiangolo.com/)** — API REST (`/api/v1/chat`) e WebSocket (`/ws/chat`).
@@ -56,36 +28,7 @@ O objetivo declarado do projeto é **eficiência**: menos tokens, menos latênci
 ## 🐳 Executando com Docker Compose (Recomendado)
 
 ```bash
-# Iniciar todos os serviços (API FastAPI + Redis)
 docker compose up -d
-
-# Verificar os logs dos containers (é aqui que aparecem as chamadas de tool)
-docker compose logs -f
-
-# Parar os serviços
-docker compose down
-```
-
-## 🛠️ Execução Local (sem Docker)
-
-```bash
-# Ativar ambiente virtual
-source .venv/bin/activate
-
-# Instalar dependências
-pip install -r requirements.txt
-
-# Iniciar servidor FastAPI
-python cli.py server
-
-# Iniciar interface REPL interativa
-python cli.py
-
-# Executar benchmark (monolítico vs roteado/cacheado)
-python run_benchmark.py
-
-# Executar suíte de testes
-pytest
 ```
 
 ---

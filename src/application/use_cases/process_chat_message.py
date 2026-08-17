@@ -1,5 +1,6 @@
 import time
 import asyncio
+import uuid
 from typing import AsyncGenerator, Dict, Any, Optional
 from src.domain.interfaces.cache_repository import ICacheRepository
 from src.domain.interfaces.intent_classifier import IIntentClassifier
@@ -91,7 +92,7 @@ class ProcessChatMessageUseCase:
 
             return ChatResponse(
                 text=greeting_response,
-                session_id=message.session_id or "fast_greeting_session",
+                session_id=message.session_id or f"greeting_{uuid.uuid4().hex}",
                 user_id=message.user_id,
                 metrics=metrics
             )
@@ -172,11 +173,12 @@ class ProcessChatMessageUseCase:
             end_time = time.perf_counter()
             latency_ms = (end_time - start_time) * 1000.0
 
-            yield {"type": "start", "session_id": message.session_id or "fast_greeting_session"}
+            greeting_session_id = message.session_id or f"greeting_{uuid.uuid4().hex}"
+            yield {"type": "start", "session_id": greeting_session_id}
             yield {"type": "delta", "text": greeting_text}
             yield {
                 "type": "complete",
-                "session_id": message.session_id or "fast_greeting_session",
+                "session_id": greeting_session_id,
                 "text": greeting_text,
                 "metrics": {
                     "latency_ms": round(latency_ms, 2),

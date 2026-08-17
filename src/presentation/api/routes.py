@@ -7,6 +7,7 @@ from src.application.use_cases.process_chat_message import ProcessChatMessageUse
 from src.infrastructure.cache.redis_cache import DualModeRedisCache
 from src.infrastructure.classifiers.lightweight_classifier import LightweightIntentClassifier
 from src.infrastructure.adk.runner import MonolithicAgentRunner
+from src.infrastructure.adk.agent import create_root_agent
 from src.infrastructure.config.settings import Settings
 
 router = APIRouter()
@@ -14,7 +15,8 @@ router = APIRouter()
 # Singletons de infraestrutura para injeção de dependência
 cache_repository = DualModeRedisCache()
 intent_classifier = LightweightIntentClassifier()
-agent_runner = MonolithicAgentRunner()
+# RootAgent multi-agente: delega dúvidas institucionais ao InstitutionalAgent especializado
+agent_runner = MonolithicAgentRunner(agent=create_root_agent())
 
 process_chat_use_case = ProcessChatMessageUseCase(
     cache_repo=cache_repository,

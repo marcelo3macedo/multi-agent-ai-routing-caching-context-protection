@@ -23,6 +23,7 @@ from src.domain.entities.chat_message import ChatMessage
 from src.infrastructure.cache.redis_cache import DualModeRedisCache
 from src.infrastructure.classifiers.lightweight_classifier import LightweightIntentClassifier
 from src.infrastructure.adk.runner import MonolithicAgentRunner
+from src.infrastructure.adk.agent import create_root_agent
 from src.infrastructure.config.settings import Settings
 
 app = typer.Typer(
@@ -62,7 +63,7 @@ async def _run_repl(url: Optional[str], user_id: str, enable_cache: bool, enable
     if not url:
         cache_repo = DualModeRedisCache()
         classifier = LightweightIntentClassifier()
-        runner = MonolithicAgentRunner()
+        runner = MonolithicAgentRunner(agent=create_root_agent())
         use_case = ProcessChatMessageUseCase(cache_repo=cache_repo, classifier=classifier, agent_runner=runner)
 
     session_id = None
@@ -187,7 +188,7 @@ def ask(
         else:
             cache_repo = DualModeRedisCache()
             classifier = LightweightIntentClassifier()
-            runner = MonolithicAgentRunner()
+            runner = MonolithicAgentRunner(agent=create_root_agent())
             use_case = ProcessChatMessageUseCase(cache_repo=cache_repo, classifier=classifier, agent_runner=runner)
             chat_res = await use_case.execute(ChatMessage(content=message))
             console.print(f"[bold cyan]Resposta:[/bold cyan] {chat_res.text}")

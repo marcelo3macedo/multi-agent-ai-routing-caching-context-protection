@@ -37,3 +37,17 @@ async def test_benchmark_tracker():
     assert summary["total_queries"] == 2
     assert summary["total_tokens"] > 0
     assert summary["avg_latency_ms"] > 0
+
+@pytest.mark.asyncio
+async def test_stream_query_with_cached_session_id():
+    runner = MonolithicAgentRunner()
+    events = []
+    async for event in runner.stream_query("Quem é a empresa?", user_id="test_user", session_id="cached_session"):
+        events.append(event)
+    
+    assert any(e.get("type") == "start" for e in events)
+    assert any(e.get("type") == "complete" for e in events)
+    assert not any(e.get("type") == "error" for e in events)
+    complete_event = next(e for e in events if e.get("type") == "complete")
+    assert complete_event["session_id"] == "cached_session"
+

@@ -134,3 +134,17 @@ class DualModeRedisCache(ICacheRepository):
             "hit_rate_percent": round(hit_rate, 2),
             "cached_entries_count": len(self._memory_store)
         }
+
+    async def clear(self) -> None:
+        self._memory_store.clear()
+        self._raw_queries.clear()
+        self._hits_exact = 0
+        self._hits_semantic = 0
+        self._misses = 0
+        client = await self._get_redis()
+        if self._is_redis_available and client:
+            try:
+                await client.flushdb()
+            except Exception:
+                pass
+

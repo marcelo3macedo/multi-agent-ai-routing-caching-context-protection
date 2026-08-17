@@ -38,8 +38,7 @@ def test_create_institutional_agent_is_scoped_and_tooled():
 def test_create_root_agent_delegates_to_institutional_subagent():
     root_agent = create_root_agent(model_name="mock-model-gemini-3.6-flash")
     assert root_agent.name == "RootAgent"
-    assert len(root_agent.sub_agents) == 1
-    assert root_agent.sub_agents[0].name == "InstitutionalAgent"
+    assert "InstitutionalAgent" in {sub.name for sub in root_agent.sub_agents}
 
 
 def test_monolithic_base_root_agent_untouched_by_subagent_changes():

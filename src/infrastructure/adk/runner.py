@@ -17,24 +17,27 @@ class MonolithicAgentRunner(IAgentRunner):
     def __init__(self, agent: Optional[LlmAgent] = None):
         self.agent = agent or create_base_root_agent()
         self.runner = InMemoryRunner(agent=self.agent)
+        self.runner.auto_create_session = True
         self._default_session_id: Optional[str] = None
         self._default_user_id = "default_benchmark_user"
 
     async def get_or_create_session(self, user_id: str = "default_user", session_id: Optional[str] = None) -> str:
         if session_id:
             try:
-                await self.runner.session_service.get_session(
+                session = await self.runner.session_service.get_session(
                     session_id=session_id,
                     user_id=user_id,
                     app_name=self.runner.app_name
                 )
-                return session_id
+                if session is not None:
+                    return session.id
             except Exception:
                 pass
         
         session = await self.runner.session_service.create_session(
             user_id=user_id,
-            app_name=self.runner.app_name
+            app_name=self.runner.app_name,
+            session_id=session_id
         )
         return session.id
 

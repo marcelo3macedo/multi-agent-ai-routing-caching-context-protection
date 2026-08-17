@@ -13,10 +13,15 @@ def test_health_endpoint():
     assert "model" in data
 
 def test_chat_rest_endpoint_success():
+    from src.presentation.api.routes import cache_repository
+    import asyncio
+    asyncio.run(cache_repository.clear())
+
     payload = {
         "message": "Quem é a empresa?",
         "user_id": "test_user_rest",
-        "session_id": None
+        "session_id": None,
+        "enable_cache": False
     }
     response = client.post("/api/v1/chat", json=payload)
     assert response.status_code == 200

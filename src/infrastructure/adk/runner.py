@@ -8,6 +8,7 @@ from google.genai import types
 from src.domain.interfaces.agent_runner import IAgentRunner
 from src.domain.entities.metrics import QueryMetrics, CacheStatus
 from src.infrastructure.adk.agent import create_base_root_agent, MONOLITHIC_SYSTEM_INSTRUCTION
+from src.infrastructure.adk.error_handling import build_friendly_error_message, log_adk_execution_error
 from src.infrastructure.config.settings import Settings
 
 class MonolithicAgentRunner(IAgentRunner):
@@ -98,7 +99,8 @@ class MonolithicAgentRunner(IAgentRunner):
                         total_tokens = um.total_token_count
 
         except Exception as e:
-            error_msg = f"Erro no streaming ADK: {str(e)}"
+            log_adk_execution_error(e)
+            error_msg = build_friendly_error_message(e)
             accumulated_text += error_msg
             yield {"type": "error", "error": error_msg}
 

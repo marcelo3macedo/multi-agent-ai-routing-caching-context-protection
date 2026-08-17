@@ -1,3 +1,4 @@
+from datetime import date
 from unittest.mock import AsyncMock
 
 import httpx
@@ -131,6 +132,15 @@ def test_create_movie_catalog_agent_is_scoped_and_tooled():
     assert agent.name == "MovieCatalogAgent"
     assert len(agent.tools) == 1
     assert agent.tools[0].name == "search_movies"
+
+
+def test_create_movie_catalog_agent_instruction_embeds_current_date_for_release_awareness():
+    agent = create_movie_catalog_agent(
+        model_name="mock-model-gemini-3.6-flash", current_date=date(2026, 8, 17)
+    )
+    assert "2026-08-17" in agent.instruction
+    assert "já foi lançado" in agent.instruction.lower()
+    assert "mais bem avaliado" in agent.instruction.lower()
 
 
 def test_create_root_agent_delegates_to_institutional_and_movie_subagents():

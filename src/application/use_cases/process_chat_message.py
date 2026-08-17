@@ -67,8 +67,8 @@ class ProcessChatMessageUseCase:
 
         if enable_routing and intent_cat == IntentCategory.GREETING:
             greeting_response = (
-                "Olá! Bom dia! Como posso ajudar você hoje na TechCorp Solutions? "
-                "Estou pronto para responder dúvidas sobre a empresa ou fazer recomendações."
+                "Olá! Bem-vindo à TechCorp Solutions, sua empresa de indicação de filmes! 🎬 "
+                "Quer saber sobre algum filme ou sobre a empresa?"
             )
             
             if enable_cache:
@@ -164,8 +164,8 @@ class ProcessChatMessageUseCase:
 
         if enable_routing and intent_cat == IntentCategory.GREETING:
             greeting_text = (
-                "Olá! Bom dia! Como posso ajudar você hoje na TechCorp Solutions? "
-                "Estou pronto para responder dúvidas sobre a empresa ou fazer recomendações."
+                "Olá! Bem-vindo à TechCorp Solutions, sua empresa de indicação de filmes! 🎬 "
+                "Quer saber sobre algum filme ou sobre a empresa?"
             )
             if enable_cache:
                 await self.cache_repo.set(query, greeting_text, ttl_seconds=86400)

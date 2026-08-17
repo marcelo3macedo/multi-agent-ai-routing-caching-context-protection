@@ -4,6 +4,7 @@ from functools import lru_cache
 from google.adk.agents import LlmAgent
 from src.infrastructure.config.settings import Settings
 from src.infrastructure.adk.prompts import INSTITUTIONAL_SYSTEM_INSTRUCTION
+from src.infrastructure.adk.tool_logging import log_after_tool_call, log_before_tool_call, log_tool_error
 
 COMPANY_INFO_PATH = Path(__file__).parent / "knowledge" / "company_info.json"
 
@@ -59,4 +60,7 @@ def create_institutional_agent(model_name: str = None) -> LlmAgent:
             "(quem somos, serviços, missão e contato)."
         ),
         tools=[get_company_info],
+        before_tool_callback=log_before_tool_call,
+        after_tool_callback=log_after_tool_call,
+        on_tool_error_callback=log_tool_error,
     )

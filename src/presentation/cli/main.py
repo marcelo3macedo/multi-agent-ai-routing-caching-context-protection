@@ -11,6 +11,7 @@ import asyncio
 import httpx
 import json
 import typer
+import warnings
 from typing import Optional
 from rich.console import Console
 from rich.panel import Panel
@@ -24,7 +25,23 @@ from src.infrastructure.cache.redis_cache import DualModeRedisCache
 from src.infrastructure.classifiers.lightweight_classifier import LightweightIntentClassifier
 from src.infrastructure.adk.runner import MonolithicAgentRunner
 from src.infrastructure.adk.agent import create_root_agent
+from src.infrastructure.adk.tool_logging import silence_adk_library_logging, silence_tool_logging
 from src.infrastructure.config.settings import Settings
+from src.presentation.cli.formatting import render_metrics_line, render_routing_badge
+
+# Logs de chamadas de tool (ADK) e tracebacks internos da lib google-adk ficam
+# restritos ao processo/container do servidor; o CLI interativo nunca deve exibi-los
+# — erros de execução são traduzidos numa resposta amigável (ver error_handling.py).
+silence_tool_logging()
+silence_adk_library_logging()
+
+# Aviso interno do Google ADK sobre features experimentais (ex: JSON_SCHEMA_FOR_FUNC_DECL)
+# não é relevante para o usuário do CLI — mantém a conversa limpa.
+warnings.filterwarnings(
+    "ignore",
+    message=r"\[EXPERIMENTAL\] feature .* is enabled\.",
+    category=UserWarning,
+)
 
 app = typer.Typer(
     help="CLI REPL & Servidor do Sistema de Roteamento e Cache AI",
@@ -143,22 +160,14 @@ async def _run_repl(url: Optional[str], user_id: str, enable_cache: bool, enable
                 border_style="cyan"
             ))
 
-            # Exibe painel de métricas e performance de otimização
+            # Exibe badge de roteamento e painel de métricas
             if metrics_data:
-                lat = metrics_data["latency_ms"]
-                pt = metrics_data["prompt_tokens"]
-                ct = metrics_data["completion_tokens"]
-                tt = metrics_data["total_tokens"]
                 intent = metrics_data.get("intent", "UNKNOWN")
                 cache_st = metrics_data.get("cache_status", "MISS")
+                lat = metrics_data["latency_ms"]
 
-                metrics_str = (
-                    f"⏱️  Latência: [bold yellow]{lat} ms[/bold yellow]  |  "
-                    f"🎯 Intenção: [bold green]{intent}[/bold green]  |  "
-                    f"📦 Cache: [bold blue]{cache_st}[/bold blue]  |  "
-                    f"📊 ADK Tokens: [bold cyan]{tt}[/bold cyan]"
-                )
-                console.print(metrics_str)
+                console.print(render_routing_badge(intent, cache_st))
+                console.print(render_metrics_line(metrics_data))
 
                 # Destaca quando o cache ou roteamento otimiza a latência
                 if cache_st in ("HIT_EXACT", "HIT_SEMANTIC") or intent == "GREETING":
@@ -183,16 +192,25 @@ def ask(
             async with httpx.AsyncClient(base_url=url, timeout=30.0) as client:
                 resp = await client.post("/api/v1/chat", json={"message": message})
                 data = resp.json()
+                metrics_data = data["metrics"]
                 console.print(f"[bold cyan]Resposta:[/bold cyan] {data['response']}")
-                console.print(f"[dim]Métricas: {data['metrics']}[/dim]")
         else:
             cache_repo = DualModeRedisCache()
             classifier = LightweightIntentClassifier()
             runner = MonolithicAgentRunner(agent=create_root_agent())
             use_case = ProcessChatMessageUseCase(cache_repo=cache_repo, classifier=classifier, agent_runner=runner)
             chat_res = await use_case.execute(ChatMessage(content=message))
+            m = chat_res.metrics
+            metrics_data = {
+                "latency_ms": round(m.latency_ms, 2),
+                "total_tokens": m.total_tokens,
+                "intent": m.intent,
+                "cache_status": m.cache_status.value if hasattr(m.cache_status, "value") else str(m.cache_status),
+            }
             console.print(f"[bold cyan]Resposta:[/bold cyan] {chat_res.text}")
-            console.print(f"[dim]Latência: {chat_res.metrics.latency_ms:.2f}ms | Intenção: {chat_res.metrics.intent} | Cache: {chat_res.metrics.cache_status} | ADK Tokens: {chat_res.metrics.total_tokens}[/dim]")
+
+        console.print(render_routing_badge(metrics_data["intent"], metrics_data["cache_status"]))
+        console.print(render_metrics_line(metrics_data))
 
     asyncio.run(_ask())
 

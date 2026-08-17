@@ -1,6 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from src.infrastructure.adk.tool_logging import configure_tool_logging
 from src.presentation.api.routes import router as api_router
+
+# Loga cada chamada de tool (ADK) na saída do processo/container do servidor.
+configure_tool_logging()
 
 app = FastAPI(
     title="Multi-Agent AI Routing, Caching & Context Protection API",

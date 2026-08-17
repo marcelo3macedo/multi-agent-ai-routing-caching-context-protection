@@ -9,7 +9,7 @@ def test_health_endpoint():
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "ok"
-    assert data["agent"] == "BaseRootAgent"
+    assert data["agent"] == "RootAgent"
     assert "model" in data
 
 def test_chat_rest_endpoint_success():
